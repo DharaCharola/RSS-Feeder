@@ -1,0 +1,277 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #09d3ac;
+}
+.full-height {
+  height: 100%;
+}
+.cart-icon {
+  width: 48px;
+}
+.card {
+  cursor: pointer;
+}
+.card:hover > .overlay {
+  display: block;
+}
+.overlay {
+  display: none; /* Hidden by default */
+  position: absolute; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0, 0, 0); /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+  color: white;
+  text-align: center;
+  padding: 40px;
+}
+
+/* #to-show {
+    display: hidden;
+}
+#to-hover:hover > #to-show {
+    display: block; 
+} */
+
+/* Categoty Layout CSS Start */
+
+.category-frame {
+  padding: 0;
+  height: 100%;
+  max-height: calc(100vh - 80px);
+}
+
+.category-frame:hover {
+  overflow: overlay;
+}
+
+.category-frame::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px transparent;
+  border-radius: 10px;
+  background-color: transparent;
+}
+
+.category-frame::-webkit-scrollbar {
+  width: 5px;
+  left: 0;
+  background-color: transparent;
+}
+
+.category-frame::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  -webkit-box-shadow: inset 0 0 6px transparent;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.category-frame .card {
+  margin: 0 10px 10px 0;
+}
+
+.card-body {
+  padding: 5px;
+}
+
+.card-title {
+  font-size: 16px;
+}
+.card-subtitle {
+  font-size: 12px;
+  padding: 5px;
+}
+
+.card-title,
+.card-subtitle {
+  text-align: center;
+  margin: 0;
+}
+
+.category-img {
+  width: 211px;
+  height: 130px;
+}
+
+/* Categoty Layout CSS End */
+
+/* Product Layout CSS Start */
+
+.product-display {
+  padding: 0;
+  height: 100%;
+  max-height: calc(100vh - 80px);
+}
+
+.product-display:hover {
+  overflow: overlay;
+}
+
+.product-display .card {
+  width: 48%;
+  display: inline-block;
+  /* margin: 0 0 10px 10px; */
+  margin: 0 10px 10px 0;
+}
+
+.product-display::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px transparent;
+  border-radius: 10px;
+  background-color: transparent;
+}
+
+.product-display::-webkit-scrollbar {
+  width: 5px;
+  left: 0;
+  background-color: transparent;
+}
+
+.product-display::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  -webkit-box-shadow: inset 0 0 6px transparent;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.product-img {
+  width: 265px;
+  height: 163px;
+}
+
+/* Product Layout CSS End */
+
+/* Order Layout CSS Start */
+
+.order-tray {
+  border: 2px solid #dee2e6;
+  border-radius: 5px;
+  height: 100%;
+  max-height: calc(100vh - 80px);
+}
+
+.order-tray:hover {
+  overflow: overlay;
+}
+
+.order-tray td span {
+  cursor: pointer;
+}
+
+.quantity {
+  width: 50px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.price-tag {
+  margin: 0;
+  font-size: 12px;
+}
+
+.order-tray .table td,
+.order-tray .table th {
+  vertical-align: middle;
+}
+
+.order-tray .table th {
+  /* border: 0; */
+  position: sticky;
+  top: 0;
+  background: white;
+}
+
+.order-tray h3 {
+  padding: 10px;
+  margin: 0;
+  font-weight: bold;
+}
+
+.order-tray::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px transparent;
+  border-radius: 10px;
+  background-color: transparent;
+}
+
+.order-tray::-webkit-scrollbar {
+  width: 5px;
+  left: 0;
+  background-color: transparent;
+}
+
+.order-tray::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  -webkit-box-shadow: inset 0 0 6px transparent;
+  background: rgba(0, 0, 0, 0.7);
+}
+.order-tray tfoot td {
+  position: sticky;
+  bottom: 0;
+  background: white;
+}
+
+.cart-product div {
+  display: inline;
+  height: 100%;
+  float: left;
+  align-items: center;
+}
+
+.cart-product img {
+  width: 24px;
+}
+
+.remove {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 16px;
+  background: #e0e0e0;
+  padding: 3px;
+  font-size: 12px;
+  display: inline-block;
+  border-radius: 100%;
+  width: 25px;
+  height: 25px;
+  text-align: center;
+  -webkit-transition: all 0.25s linear;
+  -moz-transition: all 0.25s linear;
+  -ms-transition: all 0.25s linear;
+  -o-transition: all 0.25s linear;
+  transition: all 0.25s linear;
+}
+.remove:hover {
+  background: #f30;
+}
+.del-container {
+  padding: 10px 5px;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+}
+.btn.btn-outline-secondary {
+  padding: 10px 70px;
+}
+.btn-outline-secondary:focus {
+  box-shadow: none !important;
+}
+
+/* Order Layout CSS End */
