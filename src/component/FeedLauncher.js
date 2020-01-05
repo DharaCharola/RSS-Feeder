@@ -20,9 +20,17 @@ import {
   CardMedia,
   CardContent,
   Grid,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControl,
 } from '@material-ui/core'
 import { SketchPicker } from 'react-color'
-import { withStyles } from '@material-ui/core/styles'
+import {
+  withStyles,
+  ThemeProvider,
+  createMuiTheme,
+} from '@material-ui/core/styles'
 import API from '../api'
 import * as apiList from '../api/apiList'
 
@@ -66,6 +74,9 @@ const styles = theme => ({
     height: 0,
     paddingTop: '56.25%', // 16:9
   },
+  formControl: {
+    minWidth: 140,
+  },
 })
 
 class FeedLauncher extends Component {
@@ -73,6 +84,30 @@ class FeedLauncher extends Component {
     feeds: [],
     feedUrl: '',
     loading: false,
+    themeConfig: {
+      typography: {
+        fontFamily: 'Roboto',
+        body2: {
+          fontSize: 18,
+        },
+      },
+      palette: {
+        primary: {
+          headlineColor: '#000',
+          BackColor: '#AAA',
+          textColor: '#000',
+        },
+      },
+    },
+  }
+
+  changeThemeConfig = (config, value) => {
+    this.setState({
+      themeConfig: {
+        ...this.state.config,
+        [config]: value,
+      },
+    })
   }
 
   renderFeeds = classes => {
@@ -139,7 +174,10 @@ class FeedLauncher extends Component {
 
   render() {
     const { classes } = this.props
-    const { feedUrl, loading } = this.state
+    const { feedUrl, loading, themeConfig } = this.state
+    const customTheme = createMuiTheme({
+      themeConfig,
+    })
     return (
       <div className={classes.root}>
         <AppBar position="fixed" className={classes.appBar}>
@@ -173,7 +211,6 @@ class FeedLauncher extends Component {
             variant="outlined"
           >
             <TextField
-              id="outlined-password-input"
               label="Please enter RSS feed URL here"
               type="text"
               variant="outlined"
@@ -196,29 +233,58 @@ class FeedLauncher extends Component {
             className={classes.formPaper}
             variant="outlined"
           >
-            <TextField
+            <FormControl
+              variant="outlined"
+              className={classes.formControl}
+              size="small"
+            >
+              <InputLabel shrink id="demo-simple-select-outlined-label">
+                Font Size
+              </InputLabel>
+              <Select
+                labelId="demo-simple-select-outlined-label"
+                id="demo-simple-select-outlined"
+                onChange={e =>
+                  this.changeThemeConfig('fontSize', e.target.value)
+                }
+                value={themeConfig.typography.body2.fontSize}
+                // onChange={handleChange}
+                // labelWidth={labelWidth}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                <MenuItem value={8}>8</MenuItem>
+                <MenuItem value={10}>10</MenuItem>
+                <MenuItem value={12}>12</MenuItem>
+                <MenuItem value={14}>14</MenuItem>
+                <MenuItem value={16}>16</MenuItem>
+                <MenuItem value={18}>18</MenuItem>
+                <MenuItem value={20}>20</MenuItem>
+                <MenuItem value={22}>22</MenuItem>
+                <MenuItem value={24}>24</MenuItem>
+              </Select>
+            </FormControl>
+            {/* <TextField
               id="outlined-password-input"
               label="Font Size"
               type="text"
               variant="outlined"
               size="small"
-            />
+            /> */}
             <TextField
-              id="outlined-password-input"
               label="Headline Color"
               type="text"
               variant="outlined"
               size="small"
             />
             <TextField
-              id="outlined-password-input"
               label="Text Color"
               type="text"
               variant="outlined"
               size="small"
             />
             <TextField
-              id="outlined-password-input"
               label="Background Color"
               type="text"
               variant="outlined"
@@ -234,9 +300,11 @@ class FeedLauncher extends Component {
               Save
             </Button>
           </Paper>
-          <Grid container spacing={3} className={classes.cardGrid}>
-            {loading ? <div>Loading....</div> : this.renderFeeds(classes)}
-          </Grid>
+          <ThemeProvider theme={customTheme}>
+            <Grid container spacing={3} className={classes.cardGrid}>
+              {loading ? <div>Loading....</div> : this.renderFeeds(classes)}
+            </Grid>
+          </ThemeProvider>
         </main>
       </div>
     )
