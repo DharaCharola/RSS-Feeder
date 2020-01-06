@@ -1,20 +1,20 @@
-import axios from "axios";
+import axios from 'axios'
 
 const API = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: 'http://localhost:4000/',
   headers: {
-    "Content-Type": "application/json",
-    "access-control-allow-origin": "*"
-  }
-});
+    'Content-Type': 'application/json',
+    'access-control-allow-origin': '*',
+  },
+})
 
 API.interceptors.request.use(
   config => {
-    return config;
+    return config
   },
   error => {
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
-);
+)
 
-export default API;
+export default API
