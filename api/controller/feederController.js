@@ -22,6 +22,15 @@ export function getFeeders(req, res) {
   })
 }
 
+export function getFeedData(req, res) {
+  Feeder.findOne({ _id: req.params.id }, (error, feeder) => {
+    if (error) {
+      res.json(error)
+    }
+    res.json(feeder)
+  })
+}
+
 export function fetchFeeds(req, res) {
   let feedUrl = req.body.feedUrl
   request.get(feedUrl, (error, response, finres) => {

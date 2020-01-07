@@ -18,7 +18,7 @@ let FeederSchema = new Schema(
       type: String,
       required: 'Font color required',
     },
-    headlineColor: {
+    headColor: {
       type: String,
       required: 'Header color required',
     },

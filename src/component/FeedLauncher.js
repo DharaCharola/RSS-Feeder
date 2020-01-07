@@ -20,13 +20,7 @@ import {
   CardMedia,
   CardContent,
   Grid,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControl,
-  withTheme,
 } from '@material-ui/core'
-import { SketchPicker } from 'react-color'
 import {
   withStyles,
   ThemeProvider,
@@ -75,8 +69,10 @@ const styles = theme => ({
   formControl: {
     minWidth: 140,
   },
-  cardTextStyle: {
-    color: 'red',
+  form: {
+    '& .MuiTextField-root': {
+      width: 200,
+    },
   },
 })
 
@@ -88,18 +84,21 @@ class FeedLauncher extends Component {
     },
     feedList: [],
     feedUrl: '',
-    loading: false,
+    feedData: {},
     themeConfig: {
-      fontSize: 18,
-      headlineColor: '#000000',
+      fontSize: 14,
+      headColor: '#AEAEAE',
       backColor: '#AAAAAA',
-      textColor: '#000000',
+      textColor: '#FFFFFF',
     },
+    loading: false,
   }
 
   componentDidMount() {
-    this.getFeedUrlsWithConfig()
+    this.getFeedUrlListWithConfig()
+    this.fetchPreservedData()
   }
+
   changeThemeConfig = (config, value) => {
     this.setState({
       themeConfig: {
@@ -109,14 +108,23 @@ class FeedLauncher extends Component {
     })
   }
 
+  returnContent = content => {
+    var tmp = document.createElement('div')
+    tmp.innerHTML = content
+    return tmp.textContent || tmp.innerText || ''
+  }
+
   renderFeeds = classes => {
     const { feeds } = this.state
     return feeds.list.map(feed => {
+      let imgsrc = 'assets/images/placeholder.svg'
       let contentdiv = document.createElement('div')
-      contentdiv.innerHTML = feed['content:encoded'][0]
-      let imgsrc = contentdiv.getElementsByTagName('img')[0]
-        ? contentdiv.getElementsByTagName('img')[0].src
-        : ''
+      if (feed['content:encoded']) {
+        contentdiv.innerHTML = feed['content:encoded'][0]
+        imgsrc = contentdiv.getElementsByTagName('img')[0]
+          ? contentdiv.getElementsByTagName('img')[0].src
+          : 'assets/images/placeholder.svg'
+      }
       return (
         <Grid item xs={4}>
           <Card className={classes.card}>
@@ -130,20 +138,13 @@ class FeedLauncher extends Component {
             />
             <CardMedia className={classes.media} image={imgsrc} />
             <CardContent className={classes.cardTextStyle}>
-              <Typography
-                variant="body2"
-                color="textSecondary"
-                component="div"
-                noWrap={false}
-
-                // dangerouslySetInnerHTML={{
-                //   __html: feed.description[0],
-                // }}
-              >
-                Setting up a website for your business is quite crucial these
-                days. And this goes for a brick and mortar company too —
-                regardless your business operates online or offline. The thing
-                is: Without a solid website, you are missing a huge chunk o
+              <Typography variant="body2" color="textSecondary" component="div">
+                {this.returnContent(feed.description[0])}
+                {/* <div
+                  dangerouslySetInnerHTML={{
+                    __html: feed.description[0],
+                  }}
+                ></div> */}
               </Typography>
             </CardContent>
           </Card>
@@ -164,7 +165,6 @@ class FeedLauncher extends Component {
       .catch(error => {
         this.setState({ loading: false })
       })
-    // https://www.techuz.com/blog/feed/
   }
 
   handleConfigChange = event => {
@@ -174,7 +174,7 @@ class FeedLauncher extends Component {
     })
   }
 
-  getFeedUrlsWithConfig = () => {
+  getFeedUrlListWithConfig = () => {
     API.get(apiList.FEEDER)
       .then(({ data }) => {
         this.setState({ feedList: data })
@@ -184,177 +184,252 @@ class FeedLauncher extends Component {
       })
   }
 
+  getFeedUrlWithConfig = id => {
+    API.get(`${apiList.FEEDER}/${id}`)
+      .then(({ data }) => {
+        let { url, headColor, backColor, textColor, fontSize } = data
+        this.setState({
+          feedUrl: url,
+          themeConfig: {
+            headColor,
+            backColor,
+            textColor,
+            fontSize,
+          },
+        })
+        this.parseFromRssUrl()
+        this.preserveData()
+      })
+      .catch(error => {})
+  }
+
   saveConfigs = () => {
-    const { feeds, themeConfig } = this.state
+    const { feedUrl, themeConfig } = this.state
     API.post(apiList.FEEDER, {
-      url: feeds.link,
+      url: feedUrl,
       fontSize: themeConfig.fontSize,
       backColor: themeConfig.backColor,
       textColor: themeConfig.textColor,
-      headlineColor: themeConfig.headlineColor,
+      headColor: themeConfig.headColor,
     })
       .then(({ data }) => {
-        this.getFeedUrlsWithConfig()
+        this.setState({
+          feedUrl: '',
+          feedList: [...this.state.feedList, data],
+          themeConfig: {
+            fontSize: 14,
+            headColor: '#AEAEAE',
+            backColor: '#AAAAAA',
+            textColor: '#FFFFFF',
+          },
+        })
+        this.preserveData()
       })
       .catch(error => {
         this.setState({ loading: false })
       })
   }
 
+  fetchPreservedData = () => {
+    let data = JSON.parse(localStorage.getItem('feedData'))
+    if (data) {
+      this.setState(
+        {
+          feedUrl: data.url,
+          themeConfig: data.themeConfig,
+        },
+        () => {
+          this.parseFromRssUrl()
+        }
+      )
+    }
+  }
+
+  preserveData = () => {
+    const { feedUrl, themeConfig } = this.state
+    localStorage.setItem(
+      'feedData',
+      JSON.stringify({ url: feedUrl, themeConfig })
+    )
+  }
+
   render() {
-    const { classes, theme } = this.props
+    const { classes } = this.props
     const { feedUrl, loading, themeConfig, feedList } = this.state
-    const customTheme = createMuiTheme({
-      themeConfig,
+    let theme = createMuiTheme({
+      overrides: {
+        MuiCardHeader: {
+          root: {
+            backgroundColor: themeConfig.headColor,
+          },
+        },
+        MuiCardContent: {
+          root: {
+            backgroundColor: themeConfig.backColor,
+            maxHeight: '80px',
+          },
+        },
+        MuiTypography: {
+          colorTextSecondary: {
+            color: themeConfig.textColor,
+          },
+          body2: {
+            fontSize: `${themeConfig.fontSize}px`,
+            color: themeConfig.textColor,
+          },
+        },
+      },
     })
     return (
-      <div className={classes.root}>
-        <AppBar position="fixed" className={classes.appBar}>
-          <Toolbar>
-            <Typography variant="h6" noWrap>
-              RSS Feeder
-            </Typography>
-          </Toolbar>
-        </AppBar>
-        <Drawer
-          className={classes.drawer}
-          variant="permanent"
-          classes={{
-            paper: classes.drawerPaper,
-          }}
-        >
-          <div className={classes.toolbar} />
-          <List>
-            {feedList.map((feedInfo, index) => (
-              <ListItem button key={feedInfo.url}>
-                <ListItemText primary={feedInfo.url} />
-              </ListItem>
-            ))}
-          </List>
-        </Drawer>
-        <main className={classes.content}>
-          <div className={classes.toolbar} />
-          <Paper
-            component="form"
-            className={classes.formPaper}
-            variant="outlined"
+      <ThemeProvider theme={theme}>
+        <div className={classes.root}>
+          <AppBar position="fixed" className={classes.appBar}>
+            <Toolbar>
+              <Typography variant="h6" noWrap>
+                RSS Feeder
+              </Typography>
+            </Toolbar>
+          </AppBar>
+          <Drawer
+            className={classes.drawer}
+            variant="permanent"
+            classes={{
+              paper: classes.drawerPaper,
+            }}
           >
-            <TextField
-              label="Please enter RSS feed URL here"
-              type="text"
+            <div className={classes.toolbar} />
+            <List>
+              {feedList.map((feedInfo, index) => (
+                <ListItem
+                  button
+                  key={feedInfo._id}
+                  onClick={() => this.getFeedUrlWithConfig(feedInfo._id)}
+                >
+                  <ListItemText primary={feedInfo.url} />
+                </ListItem>
+              ))}
+            </List>
+          </Drawer>
+
+          <main className={classes.content}>
+            <div className={classes.toolbar} />
+            <Paper
+              component="form"
+              className={classes.formPaper}
               variant="outlined"
-              size="small"
-              className={classes.urlText}
-              name="feedUrl"
-              onChange={this.handleConfigChange}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={this.parseFromRssUrl}
-              disabled={feedUrl === ''}
             >
-              Create Feed
-            </Button>
-          </Paper>
-          <Paper
-            component="form"
-            className={classes.formPaper}
-            variant="outlined"
-          >
-            <FormControl
-              variant="outlined"
-              className={classes.formControl}
-              size="small"
-            >
-              <InputLabel shrink id="demo-simple-select-outlined-label">
-                Font Size
-              </InputLabel>
-              <Select
-                labelId="demo-simple-select-outlined-label"
-                id="demo-simple-select-outlined"
-                onChange={e =>
-                  this.changeThemeConfig('fontSize', e.target.value)
-                }
-                value={themeConfig.fontSize}
-                // onChange={handleChange}
-                // labelWidth={labelWidth}
+              <TextField
+                label="Please enter RSS feed URL here"
+                type="text"
+                variant="outlined"
+                size="small"
+                className={classes.urlText}
+                name="feedUrl"
+                value={feedUrl}
+                onChange={this.handleConfigChange}
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={this.parseFromRssUrl}
+                disabled={feedUrl === ''}
               >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                <MenuItem value={8}>8</MenuItem>
-                <MenuItem value={10}>10</MenuItem>
-                <MenuItem value={12}>12</MenuItem>
-                <MenuItem value={14}>14</MenuItem>
-                <MenuItem value={16}>16</MenuItem>
-                <MenuItem value={18}>18</MenuItem>
-                <MenuItem value={20}>20</MenuItem>
-                <MenuItem value={22}>22</MenuItem>
-                <MenuItem value={24}>24</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl>
-              <label>HeadLine Color</label>
-              <input
-                value={themeConfig.headlineColor}
-                type="color"
-                name="headlineColor"
-                onChange={e =>
-                  this.changeThemeConfig('headlineColor', e.target.value)
-                }
-              />
-            </FormControl>
-            <FormControl>
-              <label>Text Color</label>
-              <input
-                value={themeConfig.textColor}
-                type="color"
-                name="textColor"
-                onChange={e =>
-                  this.changeThemeConfig('textColor', e.target.value)
-                }
-              />
-            </FormControl>
-            <FormControl>
-              <label>Back Color</label>
-              <input
-                value={themeConfig.backColor}
-                type="color"
-                name="backColor"
-                onChange={e =>
-                  this.changeThemeConfig('backColor', e.target.value)
-                }
-              />
-            </FormControl>
-            {/* <TextField
-              label="Text Color"
-              type="color"
+                Create Feed
+              </Button>
+            </Paper>
+            <Paper
+              component="form"
+              className={`${classes.formPaper} ${classes.form}`}
               variant="outlined"
-              size="small"
-            />
-            <TextField
-              label="Background Color"
-              type="color"
-              variant="outlined"
-              size="small"
-            /> */}
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={this.saveConfigs}
             >
-              Save
-            </Button>
-          </Paper>
-          <ThemeProvider theme={customTheme}>
-            <Grid container spacing={3} className={classes.cardGrid}>
-              {loading ? <div>Loading....</div> : this.renderFeeds(classes)}
+              <TextField
+                className={classes.textFieldWidth}
+                label="Header"
+                variant="outlined"
+                type="color"
+                size="small"
+                value={themeConfig.headColor}
+                onChange={e =>
+                  this.setState({
+                    themeConfig: {
+                      ...this.state.themeConfig,
+                      headColor: e.target.value,
+                    },
+                  })
+                }
+              />
+              <TextField
+                label="Back"
+                variant="outlined"
+                type="color"
+                size="small"
+                value={themeConfig.backColor}
+                onChange={e =>
+                  this.setState({
+                    themeConfig: {
+                      ...this.state.themeConfig,
+                      backColor: e.target.value,
+                    },
+                  })
+                }
+              />
+              <TextField
+                label="Text"
+                variant="outlined"
+                size="small"
+                type="color"
+                value={themeConfig.textColor}
+                onChange={e =>
+                  this.setState({
+                    themeConfig: {
+                      ...this.state.themeConfig,
+                      textColor: e.target.value,
+                    },
+                  })
+                }
+              />
+              <TextField
+                label="Font"
+                variant="outlined"
+                size="small"
+                type="number"
+                value={themeConfig.fontSize}
+                onChange={e =>
+                  this.setState({
+                    themeConfig: {
+                      ...this.state.themeConfig,
+                      fontSize: e.target.value,
+                    },
+                  })
+                }
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={this.saveConfigs}
+              >
+                Save
+              </Button>
+            </Paper>
+
+            <Grid
+              container
+              justify="center"
+              spacing={3}
+              className={classes.cardGrid}
+            >
+              {loading ? (
+                <div>
+                  <Typography component="span">Loading...</Typography>.
+                </div>
+              ) : (
+                this.renderFeeds(classes)
+              )}
             </Grid>
-          </ThemeProvider>
-        </main>
-      </div>
+          </main>
+        </div>
+      </ThemeProvider>
     )
   }
 }
-export default withTheme(withStyles(styles)(FeedLauncher))
+export default withStyles(styles)(FeedLauncher)
