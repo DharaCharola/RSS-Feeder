@@ -1,2 +1,2 @@
-export const GET_RSS_FEEDS = 'getRssFeeds'
-export const GET_TEST = 'test'
+export const GET_RSS_FEEDS = 'fetch-feeds'
+export const FEEDER = '/feeder'
