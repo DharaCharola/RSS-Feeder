@@ -31,6 +31,7 @@ import * as apiList from '../api/apiList'
 
 const drawerWidth = 240
 
+// Styles for layout
 const styles = theme => ({
   root: {
     display: 'flex',
@@ -78,17 +79,17 @@ const styles = theme => ({
 
 class FeedLauncher extends Component {
   state = {
+    feedList: [],
+    feedUrl: '',
     feeds: {
       link: '',
       list: [],
     },
-    feedList: [],
-    feedUrl: '',
-    feedData: {},
+    // feedData: {},
     themeConfig: {
       fontSize: 14,
-      headColor: '#AEAEAE',
-      backColor: '#AAAAAA',
+      headColor: '#0D47A1',
+      backColor: '#90CAF9',
       textColor: '#FFFFFF',
     },
     loading: false,
@@ -99,6 +100,7 @@ class FeedLauncher extends Component {
     this.fetchPreservedData()
   }
 
+  // Handle theme configuration
   changeThemeConfig = (config, value) => {
     this.setState({
       themeConfig: {
@@ -108,7 +110,118 @@ class FeedLauncher extends Component {
     })
   }
 
-  returnContent = content => {
+  // Handle dynamic state change
+  handleConfigChange = event => {
+    const { name, value } = event.target
+    this.setState({
+      [name]: value,
+    })
+  }
+
+  // ---Start--- Persist configurations in local storage
+  fetchPreservedData = () => {
+    let data = JSON.parse(localStorage.getItem('feedData'))
+    if (data) {
+      this.setState(
+        {
+          feedUrl: data.url,
+          themeConfig: data.themeConfig,
+        },
+        () => {
+          this.parseFromRssUrl()
+        }
+      )
+    }
+  }
+
+  preserveData = () => {
+    const { feedUrl, themeConfig } = this.state
+    localStorage.setItem(
+      'feedData',
+      JSON.stringify({ url: feedUrl, themeConfig })
+    )
+  }
+  // ---End--- Persist configurations in local storage
+
+  // ---Start--- Database operations
+  getFeedUrlListWithConfig = () => {
+    API.get(apiList.FEEDER)
+      .then(({ data }) => {
+        this.setState({ feedList: data })
+      })
+      .catch(error => {
+        alert('Something went wrong!')
+      })
+  }
+
+  getFeedUrlWithConfig = id => {
+    API.get(`${apiList.FEEDER}/${id}`)
+      .then(({ data }) => {
+        let { url, headColor, backColor, textColor, fontSize } = data
+        this.setState({
+          feedUrl: url,
+          themeConfig: {
+            headColor,
+            backColor,
+            textColor,
+            fontSize,
+          },
+        })
+        this.parseFromRssUrl()
+        this.preserveData()
+      })
+      .catch(error => {
+        alert('Something went wrong!')
+      })
+  }
+
+  saveConfigs = () => {
+    const { feedUrl, themeConfig } = this.state
+    this.setState({ loading: true })
+    API.post(apiList.FEEDER, {
+      url: feedUrl,
+      fontSize: themeConfig.fontSize,
+      backColor: themeConfig.backColor,
+      textColor: themeConfig.textColor,
+      headColor: themeConfig.headColor,
+    })
+      .then(({ data }) => {
+        this.setState({
+          feedUrl: '',
+          feedList: [...this.state.feedList, data],
+          themeConfig: {
+            fontSize: 14,
+            headColor: '#0D47A1',
+            backColor: '#90CAF9',
+            textColor: '#FFFFFF',
+          },
+        })
+        this.preserveData()
+      })
+      .catch(error => {
+        this.setState({ loading: false })
+        alert('Something went wrong!')
+      })
+  }
+  // ---End--- Database operations
+
+  // ---Start--- Fetch RSS feed form given URL and render it with content
+  parseFromRssUrl = () => {
+    this.setState({ loading: true })
+    API.post(apiList.GET_RSS_FEEDS, { feedUrl: this.state.feedUrl })
+      .then(({ data }) => {
+        this.setState({
+          feeds: data,
+          loading: false,
+        })
+      })
+      .catch(error => {
+        this.setState({ loading: false })
+        alert('Something went wrong!')
+      })
+  }
+
+  renderContent = content => {
     var tmp = document.createElement('div')
     tmp.innerHTML = content
     return tmp.textContent || tmp.innerText || ''
@@ -139,12 +252,7 @@ class FeedLauncher extends Component {
             <CardMedia className={classes.media} image={imgsrc} />
             <CardContent className={classes.cardTextStyle}>
               <Typography variant="body2" color="textSecondary" component="div">
-                {this.returnContent(feed.description[0])}
-                {/* <div
-                  dangerouslySetInnerHTML={{
-                    __html: feed.description[0],
-                  }}
-                ></div> */}
+                {this.renderContent(feed.description[0])}
               </Typography>
             </CardContent>
           </Card>
@@ -152,110 +260,13 @@ class FeedLauncher extends Component {
       )
     })
   }
-
-  parseFromRssUrl = () => {
-    this.setState({ loading: true })
-    API.post(apiList.GET_RSS_FEEDS, { feedUrl: this.state.feedUrl })
-      .then(({ data }) => {
-        this.setState({
-          feeds: data,
-          loading: false,
-        })
-      })
-      .catch(error => {
-        this.setState({ loading: false })
-      })
-  }
-
-  handleConfigChange = event => {
-    const { name, value } = event.target
-    this.setState({
-      [name]: value,
-    })
-  }
-
-  getFeedUrlListWithConfig = () => {
-    API.get(apiList.FEEDER)
-      .then(({ data }) => {
-        this.setState({ feedList: data })
-      })
-      .catch(error => {
-        this.setState({ loading: false })
-      })
-  }
-
-  getFeedUrlWithConfig = id => {
-    API.get(`${apiList.FEEDER}/${id}`)
-      .then(({ data }) => {
-        let { url, headColor, backColor, textColor, fontSize } = data
-        this.setState({
-          feedUrl: url,
-          themeConfig: {
-            headColor,
-            backColor,
-            textColor,
-            fontSize,
-          },
-        })
-        this.parseFromRssUrl()
-        this.preserveData()
-      })
-      .catch(error => {})
-  }
-
-  saveConfigs = () => {
-    const { feedUrl, themeConfig } = this.state
-    API.post(apiList.FEEDER, {
-      url: feedUrl,
-      fontSize: themeConfig.fontSize,
-      backColor: themeConfig.backColor,
-      textColor: themeConfig.textColor,
-      headColor: themeConfig.headColor,
-    })
-      .then(({ data }) => {
-        this.setState({
-          feedUrl: '',
-          feedList: [...this.state.feedList, data],
-          themeConfig: {
-            fontSize: 14,
-            headColor: '#AEAEAE',
-            backColor: '#AAAAAA',
-            textColor: '#FFFFFF',
-          },
-        })
-        this.preserveData()
-      })
-      .catch(error => {
-        this.setState({ loading: false })
-      })
-  }
-
-  fetchPreservedData = () => {
-    let data = JSON.parse(localStorage.getItem('feedData'))
-    if (data) {
-      this.setState(
-        {
-          feedUrl: data.url,
-          themeConfig: data.themeConfig,
-        },
-        () => {
-          this.parseFromRssUrl()
-        }
-      )
-    }
-  }
-
-  preserveData = () => {
-    const { feedUrl, themeConfig } = this.state
-    localStorage.setItem(
-      'feedData',
-      JSON.stringify({ url: feedUrl, themeConfig })
-    )
-  }
+  // ---End--- Fetch RSS feed form given URL and render it with content
 
   render() {
     const { classes } = this.props
     const { feedUrl, loading, themeConfig, feedList } = this.state
+
+    // Apply custom theme configuration from react state to UI
     let theme = createMuiTheme({
       overrides: {
         MuiCardHeader: {
@@ -406,6 +417,14 @@ class FeedLauncher extends Component {
               <Button
                 variant="contained"
                 color="primary"
+                disabled={
+                  themeConfig.headColor === '' ||
+                  themeConfig.backColor === '' ||
+                  themeConfig.textColor === '' ||
+                  themeConfig.feedUrl === '' ||
+                  themeConfig.fontSize === '' ||
+                  loading
+                }
                 onClick={this.saveConfigs}
               >
                 Save

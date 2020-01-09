@@ -7,7 +7,7 @@ export default class MainContainer extends Component {
     return (
       <BrowserRouter>
         <Switch>
-          <Route path="/" component={FeedLauncher} />
+          <Route path="/" exact component={FeedLauncher} />
         </Switch>
       </BrowserRouter>
     )
