@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import Container from '@material-ui/core/Container'
+import MenuIcon from '@material-ui/icons/Menu'
 import {
   AppBar,
   Toolbar,
@@ -20,6 +21,7 @@ import {
   CardMedia,
   CardContent,
   Grid,
+  CssBaseline,
 } from '@material-ui/core'
 import {
   withStyles,
@@ -28,6 +30,7 @@ import {
 } from '@material-ui/core/styles'
 import API from '../api'
 import * as apiList from '../api/apiList'
+import Hidden from '@material-ui/core/Hidden'
 
 const drawerWidth = 240
 
@@ -37,14 +40,25 @@ const styles = theme => ({
     display: 'flex',
   },
   appBar: {
-    zIndex: theme.zIndex.drawer + 1,
+    [theme.breakpoints.up('sm')]: {
+      width: `calc(100% - ${drawerWidth}px)`,
+      marginLeft: drawerWidth,
+    },
   },
   drawer: {
-    width: drawerWidth,
-    flexShrink: 0,
+    [theme.breakpoints.up('sm')]: {
+      width: drawerWidth,
+      flexShrink: 0,
+    },
   },
   drawerPaper: {
     width: drawerWidth,
+  },
+  menuButton: {
+    marginRight: theme.spacing(2),
+    [theme.breakpoints.up('sm')]: {
+      display: 'none',
+    },
   },
   content: {
     flexGrow: 1,
@@ -58,7 +72,7 @@ const styles = theme => ({
     padding: 10,
   },
   cardGrid: {
-    marginTop: 30,
+    padding: 15,
   },
   urlText: {
     width: '85%',
@@ -74,6 +88,12 @@ const styles = theme => ({
     '& .MuiTextField-root': {
       width: 200,
     },
+  },
+  textFieldWidth: {
+    width: 'auto',
+  },
+  fieldSpace: {
+    padding: '10px',
   },
 })
 
@@ -92,6 +112,7 @@ class FeedLauncher extends Component {
       backColor: '#90CAF9',
       textColor: '#FFFFFF',
     },
+    showDrower: false,
     loading: false,
   }
 
@@ -239,7 +260,7 @@ class FeedLauncher extends Component {
           : 'assets/images/placeholder.svg'
       }
       return (
-        <Grid item xs={4}>
+        <Grid item xs={12} sm={6} md={6} lg={4} xl={4}>
           <Card className={classes.card}>
             <CardHeader
               avatar={
@@ -261,10 +282,12 @@ class FeedLauncher extends Component {
     })
   }
   // ---End--- Fetch RSS feed form given URL and render it with content
-
+  handleDrawerToggle = () => {
+    this.setState({ showDrower: !this.state.showDrower })
+  }
   render() {
     const { classes } = this.props
-    const { feedUrl, loading, themeConfig, feedList } = this.state
+    const { feedUrl, loading, themeConfig, feedList, showDrower } = this.state
 
     // Apply custom theme configuration from react state to UI
     let theme = createMuiTheme({
@@ -294,153 +317,249 @@ class FeedLauncher extends Component {
     return (
       <ThemeProvider theme={theme}>
         <div className={classes.root}>
-          <AppBar position="fixed" className={classes.appBar}>
+          <CssBaseline />
+          <AppBar className={classes.appBar}>
             <Toolbar>
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={this.handleDrawerToggle}
+                className={classes.menuButton}
+              >
+                <MenuIcon />
+              </IconButton>
               <Typography variant="h6" noWrap>
                 RSS Feeder
               </Typography>
             </Toolbar>
           </AppBar>
-          <Drawer
-            className={classes.drawer}
-            variant="permanent"
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-          >
-            <div className={classes.toolbar} />
-            <List>
-              {feedList.map((feedInfo, index) => (
-                <ListItem
-                  button
-                  key={feedInfo._id}
-                  onClick={() => this.getFeedUrlWithConfig(feedInfo._id)}
-                >
-                  <ListItemText primary={feedInfo.url} />
-                </ListItem>
-              ))}
-            </List>
-          </Drawer>
+          <nav className={classes.drawer} aria-label="mailbox folders">
+            {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
+            <Hidden smUp implementation="css">
+              <Drawer
+                variant="temporary"
+                anchor={theme.direction === 'rtl' ? 'right' : 'left'}
+                open={showDrower}
+                onClose={this.handleDrawerToggle}
+                classes={{
+                  paper: classes.drawerPaper,
+                }}
+                ModalProps={{
+                  keepMounted: true, // Better open performance on mobile.
+                }}
+              >
+                <List>
+                  {feedList.map((feedInfo, index) => (
+                    <ListItem
+                      button
+                      key={feedInfo._id}
+                      onClick={() => this.getFeedUrlWithConfig(feedInfo._id)}
+                    >
+                      <ListItemText primary={feedInfo.url} />
+                    </ListItem>
+                  ))}
+                </List>
+              </Drawer>
+            </Hidden>
+            <Hidden xsDown implementation="css">
+              <Drawer
+                classes={{
+                  paper: classes.drawerPaper,
+                }}
+                variant="permanent"
+                open
+              >
+                <List>
+                  {feedList.map((feedInfo, index) => (
+                    <ListItem
+                      button
+                      key={feedInfo._id}
+                      onClick={() => this.getFeedUrlWithConfig(feedInfo._id)}
+                    >
+                      <ListItemText primary={feedInfo.url} />
+                    </ListItem>
+                  ))}
+                </List>
+              </Drawer>
+            </Hidden>
+          </nav>
 
           <main className={classes.content}>
             <div className={classes.toolbar} />
-            <Paper
-              component="form"
-              className={classes.formPaper}
-              variant="outlined"
-            >
-              <TextField
-                label="Please enter RSS feed URL here"
-                type="text"
-                variant="outlined"
-                size="small"
-                className={classes.urlText}
-                name="feedUrl"
-                value={feedUrl}
-                onChange={this.handleConfigChange}
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={this.parseFromRssUrl}
-                disabled={feedUrl === ''}
+            <Grid container spacing={0}>
+              <Grid item xs={12} sm={9} className={classes.fieldSpace}>
+                <TextField
+                  label="Please enter RSS feed URL here"
+                  type="text"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  // className={classes.urlText}
+                  name="feedUrl"
+                  value={feedUrl}
+                  onChange={this.handleConfigChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3} className={classes.fieldSpace}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={this.parseFromRssUrl}
+                  disabled={feedUrl === ''}
+                  fullWidth
+                >
+                  Create Feed
+                </Button>
+              </Grid>
+              <Grid
+                item
+                xs={12}
+                sm={4}
+                md={3}
+                lg={2}
+                className={classes.fieldSpace}
               >
-                Create Feed
-              </Button>
-            </Paper>
-            <Paper
-              component="form"
-              className={`${classes.formPaper} ${classes.form}`}
-              variant="outlined"
-            >
-              <TextField
-                className={classes.textFieldWidth}
-                label="Header"
-                variant="outlined"
-                type="color"
-                size="small"
-                value={themeConfig.headColor}
-                onChange={e =>
-                  this.setState({
-                    themeConfig: {
-                      ...this.state.themeConfig,
-                      headColor: e.target.value,
-                    },
-                  })
-                }
-              />
-              <TextField
-                label="Back"
-                variant="outlined"
-                type="color"
-                size="small"
-                value={themeConfig.backColor}
-                onChange={e =>
-                  this.setState({
-                    themeConfig: {
-                      ...this.state.themeConfig,
-                      backColor: e.target.value,
-                    },
-                  })
-                }
-              />
-              <TextField
-                label="Text"
-                variant="outlined"
-                size="small"
-                type="color"
-                value={themeConfig.textColor}
-                onChange={e =>
-                  this.setState({
-                    themeConfig: {
-                      ...this.state.themeConfig,
-                      textColor: e.target.value,
-                    },
-                  })
-                }
-              />
-              <TextField
-                label="Font"
-                variant="outlined"
-                size="small"
-                type="number"
-                value={themeConfig.fontSize}
-                onChange={e =>
-                  this.setState({
-                    themeConfig: {
-                      ...this.state.themeConfig,
-                      fontSize: e.target.value,
-                    },
-                  })
-                }
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                disabled={
-                  themeConfig.headColor === '' ||
-                  themeConfig.backColor === '' ||
-                  themeConfig.textColor === '' ||
-                  themeConfig.feedUrl === '' ||
-                  themeConfig.fontSize === '' ||
-                  loading
-                }
-                onClick={this.saveConfigs}
+                <TextField
+                  fullWidth
+                  label="Header"
+                  variant="outlined"
+                  type="color"
+                  size="small"
+                  value={themeConfig.headColor}
+                  onChange={e =>
+                    this.setState({
+                      themeConfig: {
+                        ...this.state.themeConfig,
+                        headColor: e.target.value,
+                      },
+                    })
+                  }
+                />
+              </Grid>
+              <Grid
+                item
+                xs={12}
+                sm={4}
+                md={3}
+                lg={2}
+                className={classes.fieldSpace}
               >
-                Save
-              </Button>
-            </Paper>
+                <TextField
+                  fullWidth
+                  label="Back"
+                  variant="outlined"
+                  type="color"
+                  size="small"
+                  value={themeConfig.backColor}
+                  onChange={e =>
+                    this.setState({
+                      themeConfig: {
+                        ...this.state.themeConfig,
+                        backColor: e.target.value,
+                      },
+                    })
+                  }
+                />
+              </Grid>
+              <Grid
+                item
+                xs={12}
+                sm={4}
+                md={3}
+                lg={2}
+                className={classes.fieldSpace}
+              >
+                <TextField
+                  fullWidth
+                  label="Text"
+                  variant="outlined"
+                  size="small"
+                  type="color"
+                  value={themeConfig.textColor}
+                  onChange={e =>
+                    this.setState({
+                      themeConfig: {
+                        ...this.state.themeConfig,
+                        textColor: e.target.value,
+                      },
+                    })
+                  }
+                />
+              </Grid>
+              <Grid
+                item
+                xs={12}
+                sm={4}
+                md={3}
+                lg={2}
+                className={classes.fieldSpace}
+              >
+                <TextField
+                  fullWidth
+                  label="Font"
+                  variant="outlined"
+                  size="small"
+                  type="number"
+                  value={themeConfig.fontSize}
+                  onChange={e =>
+                    this.setState({
+                      themeConfig: {
+                        ...this.state.themeConfig,
+                        fontSize: e.target.value,
+                      },
+                    })
+                  }
+                />
+              </Grid>
+              <Grid
+                item
+                xs={12}
+                sm={4}
+                md={3}
+                lg={2}
+                className={classes.fieldSpace}
+              >
+                <TextField
+                  label="Box Size"
+                  fullWidth
+                  variant="outlined"
+                  type="color"
+                  size="small"
+                />
+              </Grid>
 
-            <Grid
-              container
-              justify="center"
-              spacing={3}
-              className={classes.cardGrid}
-            >
+              <Grid
+                item
+                xs={12}
+                sm={4}
+                md={3}
+                lg={2}
+                className={classes.fieldSpace}
+              >
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  disabled={
+                    themeConfig.headColor === '' ||
+                    themeConfig.backColor === '' ||
+                    themeConfig.textColor === '' ||
+                    themeConfig.feedUrl === '' ||
+                    themeConfig.fontSize === '' ||
+                    loading
+                  }
+                  onClick={this.saveConfigs}
+                >
+                  Save
+                </Button>
+              </Grid>
+            </Grid>
+            <Grid container spacing={3} className={classes.cardGrid}>
               {loading ? (
-                <div>
-                  <Typography component="span">Loading...</Typography>.
-                </div>
+                <Grid item xs={12}>
+                  <Typography component="span">Loading...</Typography>
+                </Grid>
               ) : (
                 this.renderFeeds(classes)
               )}
