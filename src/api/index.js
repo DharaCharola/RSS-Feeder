@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const API = axios.create({
-  baseURL: 'http://localhost:4000/',
+  baseURL: 'http://ec2-52-91-35-54.compute-1.amazonaws.com/api',
   headers: {
     'Content-Type': 'application/json',
     'access-control-allow-origin': '*',
